@@ -6,6 +6,8 @@ const connetDB = require("./config/db");
 const errorHandler = require("./middleware/error");
 const cors = require("cors");
 const cron = require("node-cron");
+const rateLimit = require("express-rate-limit");
+const mongoSanitize = require("express-mongo-sanitize");
 // Load env vars
 dotenv.config({ path: "./config/config.env" });
 
@@ -20,10 +22,21 @@ const app = express();
 // body parser
 app.use(express.json());
 
+// Sanitize data prevent nosql injection
+app.use(mongoSanitize());
+
 //Dev logging middleware
 if (process.env.NODE_ENV == "development") {
   app.use(morgan("dev"));
 }
+
+// Rate limiting when making request to api
+const limiter = rateLimit({
+  windowMs: 10 * 60 * 1000, //10 mins
+  max: 100, //request limit
+});
+
+app.use(limiter);
 
 // Enable CORS - Cross-origin resource sharing
 app.use(cors());
